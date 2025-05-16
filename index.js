@@ -2,7 +2,8 @@ const express = require('express');
 const { Server, WebSocket } = require('ws'); // Import WebSocket class
 
 const app = express();
-const server = app.listen(8080, () => {
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
     console.log('Server running on port 8080');
 });
 
