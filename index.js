@@ -11,68 +11,71 @@ const wss = new Server({ server, path: '/ws' });
 
 let esp32Client = null;
 let lastEsp32Ping = 0;
+const phoneClients = new Set();
 
 function broadcastToPhones(message) {
-  wss.clients.forEach(client => {
-    if (client !== esp32Client && client.readyState === WebSocket.OPEN) {
+  phoneClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
   });
 }
 
 wss.on('connection', (ws) => {
-  console.log('📲 Nowy klient połączony');
+  console.log('🔌 Nowy klient połączony');
+
+  let isESP32 = false;
 
   ws.on('message', (message) => {
     const msg = message.toString();
 
-    // ESP32 się zidentyfikowało
-    if (msg === 'ESP32 Connected') {
-      esp32Client = ws;
-      lastEsp32Ping = Date.now();
-      console.log('🔌 ESP32 podłączone');
-      broadcastToPhones({ type: 'device_status', connected: true });
+    if (msg.startsWith('ID:')) {
+      const id = msg.split(':')[1];
+      if (id === 'ESP32') {
+        esp32Client = ws;
+        isESP32 = true;
+        lastEsp32Ping = Date.now();
+        console.log('✅ ESP32 połączone');
+        broadcastToPhones({ type: 'device_status', connected: true });
+      } else if (id === 'PHONE') {
+        phoneClients.add(ws);
+        console.log('📱 Aplikacja połączona');
+        ws.send(JSON.stringify({ type: 'device_status', connected: !!esp32Client && (Date.now() - lastEsp32Ping < 5000) }));
+      }
       return;
     }
 
-    // ping od ESP32
-    if (msg === 'ping' && ws === esp32Client) {
+    if (msg === 'ping' && isESP32) {
       lastEsp32Ping = Date.now();
       return;
     }
 
-    // wiadomość od aplikacji — przekaż do ESP32
-    if (ws !== esp32Client && esp32Client && esp32Client.readyState === WebSocket.OPEN) {
+    if (!isESP32 && esp32Client && esp32Client.readyState === WebSocket.OPEN) {
       esp32Client.send(msg);
-      return;
     }
 
-    // wiadomość od ESP32 — przekaż do wszystkich aplikacji
-    if (ws === esp32Client) {
+    if (isESP32) {
       broadcastToPhones({ type: 'message', payload: msg });
     }
   });
 
   ws.on('close', () => {
-    if (ws === esp32Client) {
+    if (isESP32) {
       esp32Client = null;
       console.log('❌ ESP32 rozłączone');
       broadcastToPhones({ type: 'device_status', connected: false });
     } else {
-      console.log('📴 Telefon/klient rozłączony');
+      phoneClients.delete(ws);
+      console.log('📴 Aplikacja rozłączona');
     }
   });
 });
 
-// Watchdog dla ESP32 — timeout 5s
+// Ping timeout
 setInterval(() => {
-  const now = Date.now();
-  if (now - lastEsp32Ping > 2000) {
-    console.log('⚠️ Brak pingu od ESP32 – uznajemy za rozłączone');
+  if (esp32Client && Date.now() - lastEsp32Ping > 5000) {
+    console.log('⚠️ ESP32 nie pingowało — uznajemy za rozłączone');
     esp32Client = null;
     broadcastToPhones({ type: 'device_status', connected: false });
-  }
-  else{
-    broadcastToPhones({ type: 'device_status', connected: true });
   }
 }, 1000);
