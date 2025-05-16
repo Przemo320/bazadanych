@@ -67,7 +67,7 @@ wss.on('connection', (ws) => {
 // Watchdog dla ESP32 — timeout 5s
 setInterval(() => {
   const now = Date.now();
-  if (esp32Client && now - lastEsp32Ping > 5000) {
+  if (esp32Client && now - lastEsp32Ping > 2000) {
     console.log('⚠️ Brak pingu od ESP32 – uznajemy za rozłączone');
     esp32Client = null;
     broadcastToPhones({ type: 'device_status', connected: false });
