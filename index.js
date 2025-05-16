@@ -72,4 +72,7 @@ setInterval(() => {
     esp32Client = null;
     broadcastToPhones({ type: 'device_status', connected: false });
   }
+  else{
+    broadcastToPhones({ type: 'device_status', connected: true });
+  }
 }, 1000);
