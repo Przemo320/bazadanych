@@ -4,7 +4,7 @@ const { Server, WebSocket } = require('ws'); // Import WebSocket class
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-    console.log('Server running on port 8080');
+    console.log(`Server running on port ${PORT}`);
 });
 
 const wss = new Server({ server, path: '/ws' });
