@@ -31,7 +31,7 @@ wss.on('connection', (ws) => {
         } else if (ws === esp32Client) {
             // Wiadomość od ESP32, przekaż do wszystkich klientów
             wss.clients.forEach((client) => {
-                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                if (client !== ws && client.readyState === WebSocketServer.OPEN) {
                     client.send(msg);
                 }
             });
