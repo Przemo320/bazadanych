@@ -9,9 +9,9 @@ const server = app.listen(PORT, () => {
 
 const wss = new Server({ server, path: '/ws' });
 
-// app.get('/', (req, res) => {
-//   res.send('WebSocket server działa');
-// });
+app.get('/', (req, res) => {
+  res.send('WebSocket server działa');
+});
 
 let esp32Client = null;
 
@@ -24,17 +24,21 @@ function broadcastStatus(isConnected) {
   });
 }
 
-// Heartbeat co 5 sekund
+// Heartbeat co 3 sekundy
 setInterval(() => {
   broadcastStatus(!!esp32Client);
-}, 5000);
+}, 3000);
 
 wss.on('connection', (ws) => {
   console.log('New client connected');
 
   ws.on('message', (message) => {
     const msg = message.toString();
-    console.log(`Received: ${msg}`);
+
+    if (msg === 'ping') {
+      // Ignoruj ping
+      return;
+    }
 
     if (msg === 'ESP32 Connected') {
       esp32Client = ws;
