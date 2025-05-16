@@ -9,7 +9,7 @@
     <button onclick="sendCommand('OFF')">Wyłącz LED</button>
     <p>Status: <span id="status">Oczekiwanie...</span></p>
     <script>
-        const socket = new WebSocket('ws://' + window.location.host + '/ws');
+        const socket = new WebSocket('wss://' + window.location.host + '/ws');
         socket.onopen = () => console.log('Connected to server');
         socket.onmessage = (event) => {
             document.getElementById('status').innerText = event.data;
