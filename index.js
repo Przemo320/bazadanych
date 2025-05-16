@@ -9,9 +9,9 @@ const server = app.listen(PORT, () => {
 
 const wss = new Server({ server, path: '/ws' });
 
-app.get('/', (req, res) => {
-  res.send('WebSocket server działa');
-});
+// app.get('/', (req, res) => {
+//   res.send('WebSocket server działa');
+// });
 
 let esp32Client = null;
 
@@ -23,6 +23,11 @@ function broadcastStatus(isConnected) {
     }
   });
 }
+
+// Heartbeat co 5 sekund
+setInterval(() => {
+  broadcastStatus(!!esp32Client);
+}, 5000);
 
 wss.on('connection', (ws) => {
   console.log('New client connected');
